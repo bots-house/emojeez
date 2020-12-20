@@ -1,21 +1,18 @@
+mod styles;
+
+use std::collections::HashMap;
 use std::convert::Infallible;
 
 use anyhow;
 use hyper::{Body, Request, Response, Server};
 use hyper::service::{make_service_fn, service_fn};
 use reqwest::Client;
-use regex::Regex;
-use lazy_static::lazy_static;
 use cached::proc_macro::cached;
-
-
-lazy_static!(
-    static ref IMG_LOC_RE: regex::Regex = Regex::new(r#"<img.*?srcset="(.+?)""#).unwrap();
-);
+use url;
 
 
 #[cached(result = true)]
-async fn get_emoji_png(emoji: String) -> anyhow::Result<Vec<u8>> {
+async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> {
     let client = Client::new();
     let resp = client
         .get(&format!("https://emojipedia.org/{}/", emoji))
@@ -25,7 +22,10 @@ async fn get_emoji_png(emoji: String) -> anyhow::Result<Vec<u8>> {
         .await?;
 
     let first_match =
-        IMG_LOC_RE.captures_iter(resp.as_str()).next();
+        styles::Style::
+            regex_from_string(&style)?
+            .captures_iter(resp.as_str())
+            .next();
 
     match first_match {
         Some(loc_url) => {
@@ -56,9 +56,22 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
     let emoji = request.uri()
         .path()
         .trim_start_matches("/")
-        .trim_end_matches("/");
+        .trim_end_matches("/")
+        .to_string();
 
-    match get_emoji_png(emoji.to_string()).await {
+    let params: HashMap<String, String> = request
+        .uri()
+        .query()
+        .map(|v| {
+            url::form_urlencoded::parse(v.as_bytes())
+                .into_owned()
+                .collect()
+        })
+        .unwrap_or_else(HashMap::new);
+
+    let fallback = String::from("apple");
+    let style = params.get("style").unwrap_or(&fallback); // todo
+    match get_emoji_png(emoji, style.to_lowercase()).await {
         Ok(bin) => Ok(
             Response::builder()
                 .status(200)
