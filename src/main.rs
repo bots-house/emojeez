@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
 use anyhow;
-use hyper::{Body, Request, Response, Server, body::Bytes};
+use hyper::{Body, Request, Response, Server};
 use hyper::service::{make_service_fn, service_fn};
 use reqwest::Client;
 use regex::Regex;
@@ -15,7 +15,7 @@ lazy_static!(
 
 
 #[cached(result = true)]
-async fn get_emoji_png(emoji: String) -> anyhow::Result<Bytes> {
+async fn get_emoji_png(emoji: String) -> anyhow::Result<Vec<u8>> {
     let client = Client::new();
     let resp = client
         .get(&format!("https://emojipedia.org/{}/", emoji))
@@ -37,7 +37,7 @@ async fn get_emoji_png(emoji: String) -> anyhow::Result<Bytes> {
                         .bytes()
                         .await?;
 
-                    return Ok(emoji_data);
+                    return Ok(emoji_data.to_vec());
                 },
                 _ => {}
             }
@@ -60,13 +60,13 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         Ok(bin) => Ok(
             Response::builder()
                 .status(200)
-                .body(bin.to_vec().into())
+                .body(bin.into())
                 .unwrap()
             ),
         Err(_) => Ok(
             Response::builder()
                 .status(404)
-                .body("not found".into())
+                .body("not found :'(".into())
                 .unwrap()
         ),
     }
@@ -75,11 +75,12 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
 
 #[tokio::main]
 async fn main() {
-    let addr = std::env::var("SERVER_ADDR").unwrap().parse().unwrap();
+    let addr = std::env::var("SERVER_ADDR").unwrap();
     let make_svc = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(view))
     });
-    let server = Server::bind(&addr).serve(make_svc);
+    println!("listening\n\t> try: http://{}/crying-face/", addr);
+    let server = Server::bind(&addr.parse().unwrap()).serve(make_svc);
     if let Err(e) = server.await {
         eprintln!("server error: {}", e);
     }
