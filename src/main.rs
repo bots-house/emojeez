@@ -10,7 +10,7 @@ use cached::proc_macro::cached;
 
 
 lazy_static!(
-    static ref IMG_LOC_RE: regex::Regex = Regex::new(r#"<img.*?data-cfsrc="(.+?)""#).unwrap();
+    static ref IMG_LOC_RE: regex::Regex = Regex::new(r#"<img.*?srcset="(.+?)""#).unwrap();
 );
 
 
@@ -31,13 +31,15 @@ async fn get_emoji_png(emoji: String) -> anyhow::Result<Vec<u8>> {
         Some(loc_url) => {
             match loc_url.get(1) {
                 Some(url) => {
-                    let emoji_data = client.get(url.as_str())
-                        .send()
-                        .await?
-                        .bytes()
-                        .await?;
+                    if let Some(hq_url) = url.as_str().split_whitespace().next() {
+                        let emoji_data = client.get(hq_url)
+                            .send()
+                            .await?
+                            .bytes()
+                            .await?;
 
-                    return Ok(emoji_data.to_vec());
+                        return Ok(emoji_data.to_vec());
+                    }
                 },
                 _ => {}
             }
