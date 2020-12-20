@@ -10,7 +10,7 @@ use cached::proc_macro::cached;
 
 
 lazy_static!(
-    static ref IMG_LOC_RE: regex::Regex = Regex::new(r#"<img.*?src="(.+?)""#).unwrap();
+    static ref IMG_LOC_RE: regex::Regex = Regex::new(r#"<img.*?data-cfsrc="(.+?)""#).unwrap();
 );
 
 
@@ -60,6 +60,7 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         Ok(bin) => Ok(
             Response::builder()
                 .status(200)
+                .header("content-type", "image/png")
                 .body(bin.into())
                 .unwrap()
             ),
@@ -79,7 +80,7 @@ async fn main() {
     let make_svc = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(view))
     });
-    println!("listening\n\t> try: http://{}/crying-face/", addr);
+    println!("💖 listening 💘\n\t> try: http://{}/crying-face/", addr);
     let server = Server::bind(&addr.parse().unwrap()).serve(make_svc);
     if let Err(e) = server.await {
         eprintln!("server error: {}", e);
