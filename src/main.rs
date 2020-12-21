@@ -1,4 +1,5 @@
 mod styles;
+mod resizer;
 
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -12,7 +13,7 @@ use url;
 
 
 #[cached(result = true)]
-async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> {
+async fn get_emoji_png(emoji: String, style: String, size: (u32, u32)) -> anyhow::Result<Vec<u8>> {
     let client = Client::new();
     let resp = client
         .get(&format!("https://emojipedia.org/{}/", emoji))
@@ -38,7 +39,11 @@ async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> 
                             .bytes()
                             .await?;
 
-                        return Ok(emoji_data.to_vec());
+                        let src_vec = emoji_data.to_vec();
+                        return resizer::resize(size, &src_vec).map_or(
+                            Ok(src_vec),
+                            Ok,
+                        );
                     }
                 },
                 _ => {}
@@ -71,7 +76,27 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
 
     let fallback = String::from("apple");
     let style = params.get("style").unwrap_or(&fallback); // todo
-    match get_emoji_png(emoji, style.to_lowercase()).await {
+
+    let fallback: (u32, u32) = (240, 240);
+    let size = params.get("size")
+        .map_or(
+            fallback,
+            |val| {
+                let mut iter = val.split(":");
+                (
+                    iter.next().map_or(
+                        fallback.0,
+                        |n| n.parse::<u32>().unwrap_or(fallback.0),
+                    ),
+                    iter.next().map_or(
+                        fallback.1,
+                        |n| n.parse::<u32>().unwrap_or(fallback.1),
+                    )
+                )
+            }
+        );
+
+    match get_emoji_png(emoji, style.to_lowercase(), size).await {
         Ok(bin) => Ok(
             Response::builder()
                 .status(200)
