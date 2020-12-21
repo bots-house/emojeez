@@ -10,7 +10,7 @@ use hyper::{Body, Request, Response, Server};
 use reqwest::Client;
 
 #[cached(result = true)]
-async fn get_emoji_png(emoji: String, style: String, size: (u32, u32)) -> anyhow::Result<Vec<u8>> {
+async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> {
     let client = Client::new();
     let resp = client
         .get(&format!("https://emojipedia.org/{}/", emoji))
@@ -27,14 +27,8 @@ async fn get_emoji_png(emoji: String, style: String, size: (u32, u32)) -> anyhow
         if let Some(loc_url) = first_match.get(1) {
             if let Some(hq_url) = loc_url.as_str().split_whitespace().next() {
                 let emoji_data = client.get(hq_url).send().await?.bytes().await?;
-                let src_vec = emoji_data.to_vec();
-
-                return if size.0 == 0 && size.1 == 0 {
-                    Ok(src_vec)
-                } else {
-                    resizer::resize(size, &src_vec).map_or(Ok(src_vec), Ok)
-                };
-            }
+                return Ok(emoji_data.to_vec());
+            };
         };
     };
 
@@ -76,13 +70,20 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         )
     });
 
-    match get_emoji_png(emoji, style.to_lowercase(), size).await {
-        Ok(bin) => Ok(Response::builder()
-            .status(200)
-            .header("cache-control", format!("public, max-age={}", 86400))
-            .header("content-type", "image/png")
-            .body(bin.into())
-            .unwrap()),
+    match get_emoji_png(emoji, style.to_lowercase()).await {
+        Ok(bin) => {
+            let bin = if size.0 == 0 && size.1 == 0 {
+                bin
+            } else {
+                resizer::resize(size, &bin).unwrap_or(bin)
+            };
+            Ok(Response::builder()
+                .status(200)
+                .header("cache-control", format!("public, max-age={}", 86400))
+                .header("content-type", "image/png")
+                .body(bin.into())
+                .unwrap())
+        }
         Err(_) => Ok(Response::builder()
             .status(404)
             .body("not found :'(".into())
