@@ -1,10 +1,8 @@
-
 use std::collections::HashMap;
 use std::fmt;
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use anyhow;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Style {
@@ -22,8 +20,7 @@ pub enum Style {
     Messenger,
 }
 
-
-lazy_static!(
+lazy_static! {
     static ref STYLES_MAP: HashMap<&'static Style, Regex> = {
         let mut map = HashMap::new();
 
@@ -43,15 +40,18 @@ lazy_static!(
         ];
 
         for style in arr.iter() {
-            map.insert(style, Regex::new(&format!(
-                "<img.*?srcset=\"(.+?/{style}/.+?)\"",
-                style = style
-            )).unwrap());
-        };
+            map.insert(
+                style,
+                Regex::new(&format!(
+                    "<img.*?srcset=\"(.+?/{style}/.+?)\"",
+                    style = style
+                ))
+                .unwrap(),
+            );
+        }
         map
     };
-);
-
+}
 
 impl fmt::Display for Style {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -72,10 +72,9 @@ impl fmt::Display for Style {
     }
 }
 
-
 impl Style {
-    pub fn regex_from_string(string: &String) -> anyhow::Result<&Regex> {
-        match string.as_str() {
+    pub fn regex_from_string(string: &str) -> anyhow::Result<&Regex> {
+        match string {
             "apple" => Ok(Style::Apple.to_regex()),
             "google" => Ok(Style::Google.to_regex()),
             "twitter" => Ok(Style::Twitter.to_regex()),

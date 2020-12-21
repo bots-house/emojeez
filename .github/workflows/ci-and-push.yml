@@ -1,0 +1,42 @@
+name: CI and registry push
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  try_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: icepuma/rust-action@master
+        with:
+          args: cargo fmt -- --check && cargo clippy -- -Dwarnings && cargo test
+
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to registry
+        run: |
+          docker login -u ${{ github.actor }} \
+          -p ${{ secrets.GITHUB_TOKEN }} \
+          docker.pkg.github.com
+      - name: Pulling cache
+        run: |
+          docker pull docker.pkg.github.com/${{ github.repository }}/img:latest || true
+      - name: Build staging image
+        run: |
+          docker build \
+            --tag docker.pkg.github.com/${{ github.repository }}/img:latest \
+            --cache-from docker.pkg.github.com/${{ github.repository }}/img:latest \
+            --file Dockerfile \
+            .
+      - name: Push staging image
+        run: |
+          docker push docker.pkg.github.com/${{ github.repository }}/img:latest
