@@ -13,7 +13,7 @@ RUN set -x && rm target/x86_64-unknown-linux-musl/release/deps/emojeez*
 # add the real code and compile the project
 COPY src ./src
 RUN set -x && cargo build --target x86_64-unknown-linux-musl --release
-RUN mkdir -p /emojeez
+RUN mkdir -p /rbin
 RUN set -x && cp target/x86_64-unknown-linux-musl/release/emojeez /rbin/
 
 # second stage
