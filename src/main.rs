@@ -92,10 +92,10 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
 
 #[tokio::main]
 async fn main() {
-    let addr = std::env::var("SERVER_ADDR").unwrap();
+    let addr = std::env::var("SERVER_ADDR").unwrap_or_else(|_| String::from("127.0.0.1:8000"));
     let make_svc = make_service_fn(|_conn| async { Ok::<_, Infallible>(service_fn(view)) });
-    println!("💖 listening 💘\n\t> try: http://{}/crying-face/", addr);
     let server = Server::bind(&addr.parse().unwrap()).serve(make_svc);
+    println!("💖 listening 💘\n\t> try: http://{}/crying-face/", addr);
     if let Err(e) = server.await {
         eprintln!("server error: {}", e);
     }

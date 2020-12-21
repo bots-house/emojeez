@@ -29,14 +29,14 @@ jobs:
           docker.pkg.github.com
       - name: Pulling cache
         run: |
-          docker pull docker.pkg.github.com/${{ github.repository }}/${{ github.repository }}:latest || true
+          docker pull docker.pkg.github.com/${{ github.repository }}/emojeez:latest || true
       - name: Build staging image
         run: |
           docker build \
-            --tag docker.pkg.github.com/${{ github.repository }}/${{ github.repository }}:latest \
-            --cache-from docker.pkg.github.com/${{ github.repository }}/${{ github.repository }}:latest \
+            --tag docker.pkg.github.com/${{ github.repository }}/emojeez:latest \
+            --cache-from docker.pkg.github.com/${{ github.repository }}/emojeez:latest \
             --file Dockerfile \
             .
       - name: Push staging image
         run: |
-          docker push docker.pkg.github.com/${{ github.repository }}/${{ github.repository }}:latest
+          docker push docker.pkg.github.com/${{ github.repository }}/emojeez:latest
