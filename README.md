@@ -24,9 +24,9 @@
 <img src="https://emoji.bots.house/💖/?size=120&style=google" alt="heart">
 ```
 
-## documentation
+## 🖼 documentation
 
-### 🖼 access emoji png
+### access emoji png
 
 ```http request
 GET {uri}/{emoji|emoji_alias}/
@@ -35,8 +35,8 @@ GET {uri}/{emoji|emoji_alias}/
 Note: will return naively sized image/png as stored in emojipedia CDN
 
 #### returns
-`200` success with image in response body
-`404` emoji was not found
+- `200` success with image in response body
+- `404` emoji was not found
 
 ### query params
 
@@ -52,8 +52,8 @@ Note: since most emoji pngs are M*M, giving only width is sure enough.
 Accessing bigger sizes of small images can be troublesome, but server will do its best.
 
 ##### returns
-`200` success with image in response body
-`404` emoji was not found
+- `200` success with image in response body
+- `404` emoji was not found
 
 #### `style`
 
@@ -64,8 +64,8 @@ GET {uri}/{emoji|emoji_alias}/?style=[one_allowed_style]
 Note: default style is `apple`
 
 ##### returns
-`200` success with image in response body
-`404` emoji was not found or style is unknown
+- `200` success with image in response body
+- `404` emoji was not found or style is unknown
 
 ### 🏓 ping
 
@@ -73,4 +73,4 @@ Note: default style is `apple`
 GET {domain}/ping/
 ```
 
-`200` with exact body `pong`
+- `200` with exact body `pong`
