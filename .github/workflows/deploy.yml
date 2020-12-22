@@ -1,4 +1,4 @@
-name: CI and registry push
+name: 💖 Deploy emojeez 💘
 
 on:
   push:
@@ -7,16 +7,7 @@ on:
 
 
 jobs:
-  try_build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: icepuma/rust-action@master
-        with:
-          args: cargo fmt -- --check && cargo clippy -- -Dwarnings && cargo test
-
-  push:
+  push_then_deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,3 +31,7 @@ jobs:
       - name: Push staging image
         run: |
           docker push docker.pkg.github.com/${{ github.repository }}/emojeez:latest
+
+      - name: Call Deploy Hooks
+        run: |
+          .github/deploy.sh ${{ secrets.DEPLOY_HOOK }}

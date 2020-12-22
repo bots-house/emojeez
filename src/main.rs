@@ -36,12 +36,16 @@ async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> 
 }
 
 async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let emoji = request
+    let required_item = request
         .uri()
         .path()
         .trim_start_matches('/')
         .trim_end_matches('/')
         .to_string();
+
+    if required_item == "ping" {
+        return Ok(Response::new("pong".into()));
+    }
 
     let params: HashMap<String, String> = request
         .uri()
@@ -70,7 +74,7 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         )
     });
 
-    match get_emoji_png(emoji, style.to_lowercase()).await {
+    match get_emoji_png(required_item, style.to_lowercase()).await {
         Ok(bin) => {
             let bin = if size.0 == 0 && size.1 == 0 {
                 bin
@@ -79,7 +83,7 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
             };
             Ok(Response::builder()
                 .status(200)
-                .header("cache-control", format!("public, max-age={}", 86400))
+                .header("cache-control", format!("public, max-age={}", 864000))
                 .header("content-type", "image/png")
                 .body(bin.into())
                 .unwrap())
