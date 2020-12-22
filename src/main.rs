@@ -1,6 +1,7 @@
 mod resizer;
 mod styles;
 
+use std::cmp::min;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
@@ -9,7 +10,9 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use reqwest::Client;
 
-#[cached(result = true)]
+const MAX_SIZE: (u32, u32) = (600, 600);
+
+#[cached(result = true, time = 43200)]
 async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> {
     let client = Client::new();
     let resp = client
@@ -63,15 +66,22 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
     let fallback: (u32, u32) = (0, 0);
     let size = params.get("size").map_or(fallback, |val| {
         let mut iter = val.split(':');
-        let first_size = iter
-            .next()
-            .map_or(fallback.0, |n| n.parse::<u32>().unwrap_or(fallback.0));
 
-        (
-            first_size,
+        // we fallback to unset if w in {w}:{h} was not passed
+        let first_size = min(
+            MAX_SIZE.0,
+            iter.next()
+                .map_or(fallback.0, |n| n.parse::<u32>().unwrap_or(fallback.0)),
+        );
+
+        // we fallback to first_size if h in {w}:{h} was not passed
+        let second_size = min(
+            MAX_SIZE.1,
             iter.next()
                 .map_or(first_size, |n| n.parse::<u32>().unwrap_or(first_size)),
-        )
+        );
+
+        (first_size, second_size)
     });
 
     match get_emoji_png(required_item, style.to_lowercase()).await {
@@ -79,7 +89,7 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
             let bin = if size.0 == 0 && size.1 == 0 {
                 bin
             } else {
-                resizer::resize(size, &bin).unwrap_or(bin)
+                resizer::resize_png(size, &bin).unwrap_or(bin)
             };
             Ok(Response::builder()
                 .status(200)
