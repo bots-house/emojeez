@@ -7,7 +7,7 @@ networks:
 
 services:
   server:
-    image: docker.pkg.github.com/bots-house/emojeez/img:latest
+    image: docker.pkg.github.com/bots-house/emojeez/emojeez:latest
 
     environment:
       SERVER_ADDR: 0.0.0.0:8000
