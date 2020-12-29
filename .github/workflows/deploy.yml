@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master
-
+      - portainer-deploy
 
 jobs:
   push_then_deploy:
@@ -18,9 +18,11 @@ jobs:
           docker login -u ${{ github.actor }} \
           -p ${{ secrets.GITHUB_TOKEN }} \
           docker.pkg.github.com
+
       - name: Pulling cache
         run: |
           docker pull docker.pkg.github.com/${{ github.repository }}/emojeez:latest || true
+
       - name: Build staging image
         run: |
           docker build \
@@ -32,6 +34,28 @@ jobs:
         run: |
           docker push docker.pkg.github.com/${{ github.repository }}/emojeez:latest
 
-      - name: Call Deploy Hooks
-        run: |
-          .github/deploy.sh ${{ secrets.DEPLOY_HOOK }}
+      - name: Deploy Stack
+        uses: bots-house/portainer-deploy-stack-action@master # TODO: replace with release
+        with:
+          # url of Poratainer instance
+          portainer-url: ${{ secrets.CLUSTER_PORTAINER_URL }}
+
+          # portainer auth
+          portainer-username: ${{ secrets.CLUSTER_PORTAINER_USERNAME }}
+          portainer-password: ${{ secrets.CLUSTER_PORTAINER_PASSWORD }}
+          
+          # internal portainer cluster id
+          portainer-endpoint: 1
+          
+          # stack name
+          stack-name: emojeez
+
+          # docker stack file location
+          stack-file: .github/stack/production.yml
+          
+          # vars to substitute in stack
+          stack-vars: |
+            DOMAIN: emoji.${{ secrets.CLUSTER_BASE_DOMAIN }}
+
+          # grant access for specified teams
+          teams: Microservices
