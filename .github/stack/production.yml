@@ -1,0 +1,50 @@
+version: '3.7'
+
+networks:
+  traefik_default:
+    external: true
+
+
+services:
+  server:
+    image: ghcr.io/bots-house/emojeez:latest
+
+    environment:
+      SERVER_ADDR: 0.0.0.0:8000
+
+    networks:
+      - traefik_default
+
+    deploy:
+      replicas: 2
+
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+
+      placement:
+        constraints:
+          - node.role == worker
+          - node.labels.env == production-mix
+
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik_default
+        - traefik.http.routers.emojeez-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.emojeez-http.entrypoints=http
+        - traefik.http.routers.emojeez-http.middlewares=https-redirect
+        - traefik.http.routers.emojeez-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.emojeez-https.entrypoints=https
+        - traefik.http.routers.emojeez-https.tls=true
+        - traefik.http.routers.emojeez-https.tls.certresolver=le-cf
+        - traefik.http.services.emojeez.loadbalancer.server.port=8000
