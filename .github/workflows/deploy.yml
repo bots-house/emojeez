@@ -43,28 +43,28 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.build_and_push.outputs.digest }}
 
-      # - name: Deploy Stack
-      #   uses: bots-house/portainer-deploy-stack-action@main # TODO: replace with release
-      #   with:
-      #     # url of Poratainer instance
-      #     portainer-url: ${{ secrets.CLUSTER_PORTAINER_URL }}
+      - name: Deploy Stack
+        uses: bots-house/portainer-deploy-stack-action@main # TODO: replace with release
+        with:
+          # url of Poratainer instance
+          portainer-url: ${{ secrets.CLUSTER_PORTAINER_URL }}
 
-      #     # portainer auth
-      #     portainer-username: ${{ secrets.CLUSTER_PORTAINER_USERNAME }}
-      #     portainer-password: ${{ secrets.CLUSTER_PORTAINER_PASSWORD }}
+          # portainer auth
+          portainer-username: ${{ secrets.CLUSTER_PORTAINER_USERNAME }}
+          portainer-password: ${{ secrets.CLUSTER_PORTAINER_PASSWORD }}
           
-      #     # internal portainer cluster id
-      #     portainer-endpoint: 1
+          # internal portainer cluster id
+          portainer-endpoint: 1
           
-      #     # stack name
-      #     stack-name: emojeez
+          # stack name
+          stack-name: emojeez
 
-      #     # docker stack file location
-      #     stack-file: .github/stack/production.yml
+          # docker stack file location
+          stack-file: .github/stack/production.yml
           
-      #     # vars to substitute in stack
-      #     stack-vars: |
-      #       DOMAIN: emoji.${{ secrets.CLUSTER_BASE_DOMAIN }}
+          # vars to substitute in stack
+          stack-vars: |
+            DOMAIN: emoji.${{ secrets.CLUSTER_BASE_DOMAIN }}
 
-      #     # grant access for specified teams
-      #     teams: Microservices
+          # grant access for specified teams
+          teams: Microservices
