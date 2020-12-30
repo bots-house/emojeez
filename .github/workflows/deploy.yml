@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - portainer-deploy # todo remove it 
 
 jobs:
   push_then_deploy:
@@ -44,7 +43,7 @@ jobs:
         run: echo ${{ steps.build_and_push.outputs.digest }}
 
       - name: Deploy Stack
-        uses: bots-house/portainer-deploy-stack-action@main # TODO: replace with release
+        uses: bots-house/portainer-deploy-stack-action@main # TODO: replace after stable release of action
         with:
           # url of Poratainer instance
           portainer-url: ${{ secrets.CLUSTER_PORTAINER_URL }}
