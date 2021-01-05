@@ -73,21 +73,21 @@ impl fmt::Display for Style {
 }
 
 impl Style {
-    pub fn regex_from_string(string: &str) -> anyhow::Result<&Regex> {
+    pub fn regex_from_string(string: &str) -> Option<&Regex> {
         match string {
-            "apple" => Ok(Style::Apple.to_regex()),
-            "google" => Ok(Style::Google.to_regex()),
-            "twitter" => Ok(Style::Twitter.to_regex()),
-            "samsung" => Ok(Style::Samsung.to_regex()),
-            "whatsapp" => Ok(Style::WhatsApp.to_regex()),
-            "lg" => Ok(Style::LG.to_regex()),
-            "htc" => Ok(Style::HTC.to_regex()),
-            "openmoji" => Ok(Style::OpenMoji.to_regex()),
-            "microsoft" => Ok(Style::Microsoft.to_regex()),
-            "mozilla" => Ok(Style::Mozilla.to_regex()),
-            "facebook" => Ok(Style::Facebook.to_regex()),
-            "messenger" => Ok(Style::Messenger.to_regex()),
-            _ => Err(anyhow::anyhow!("not found :'(")),
+            "apple" => Some(Style::Apple.to_regex()),
+            "google" => Some(Style::Google.to_regex()),
+            "twitter" => Some(Style::Twitter.to_regex()),
+            "samsung" => Some(Style::Samsung.to_regex()),
+            "whatsapp" => Some(Style::WhatsApp.to_regex()),
+            "lg" => Some(Style::LG.to_regex()),
+            "htc" => Some(Style::HTC.to_regex()),
+            "openmoji" => Some(Style::OpenMoji.to_regex()),
+            "microsoft" => Some(Style::Microsoft.to_regex()),
+            "mozilla" => Some(Style::Mozilla.to_regex()),
+            "facebook" => Some(Style::Facebook.to_regex()),
+            "messenger" => Some(Style::Messenger.to_regex()),
+            _ => None,
         }
     }
 
