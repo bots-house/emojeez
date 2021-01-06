@@ -2,22 +2,6 @@
 
 ## [`💖 get a great heart`](https://emoji.bots.house/%F0%9F%92%96/?size=510&style=google)
 
-## 💅 supported emoji styles
-
-    Mozilla
-    Apple
-    Google
-    Twitter
-    Samsung
-    WhatsApp
-    LG
-    HTC
-    OpenMoji
-    Microsoft
-    Facebook
-    Messenger
-
-
 ## 👨‍🦯 examples
 
 ```html
@@ -49,7 +33,8 @@ GET {uri}/{emoji|emoji_alias}/?size={width}[:{height}]
 ```
 
 Note: since most emoji pngs are M*M, giving only width is sure enough. 
-Accessing bigger sizes of small images can be troublesome, but server will do its best.
+Accessing bigger sizes of small images can be troublesome, but server will do its best. 
+If we could not resize png, the server guarantees to return data at its original size.
 
 ##### returns
 - `200` success with image in response body
@@ -61,7 +46,23 @@ Accessing bigger sizes of small images can be troublesome, but server will do it
 GET {uri}/{emoji|emoji_alias}/?style=[one_allowed_style]
 ```
 
-Note: default style is `apple`
+##### 💅 supported emoji styles
+
+    Mozilla
+    Apple
+    Google
+    Twitter
+    Samsung
+    WhatsApp
+    LG
+    HTC
+    OpenMoji
+    Microsoft
+    Facebook
+    Messenger
+
+
+Note: this query parameter is case-insensitive and defaults to `apple`
 
 ##### returns
 - `200` success with image in response body
@@ -70,7 +71,7 @@ Note: default style is `apple`
 ### 🏓 ping
 
 ```http request
-GET {domain}/ping/
+GET {uri}/ping/
 ```
 
 - `200` with exact body `pong`

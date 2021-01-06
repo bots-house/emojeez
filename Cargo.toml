@@ -12,8 +12,7 @@ url = "2.2"
 
 reqwest = "0.10"
 hyper = "0.13"
-tokio = { version = "0.2", features = ["full"] }
-cached = "0.22"
+tokio = { version = "0.2", features = ["macros"] }
 image = "0.23"
 
 [profile.release]

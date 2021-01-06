@@ -5,16 +5,15 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::convert::Infallible;
 
-use cached::proc_macro::cached;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
+use lazy_static::lazy_static;
 use reqwest::Client;
 
+const CACHE_CONTROL_MAX: u32 = 864000; // 864000 secs. ~= 10 days
 const MAX_SIZE: (u32, u32) = (600, 600);
 
-#[cached(result = true, time = 43200)]
-async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> {
-    let client = Client::new();
+async fn get_emoji_png(emoji: &str, style: &str, client: &Client) -> anyhow::Result<Vec<u8>> {
     let resp = client
         .get(&format!("https://emojipedia.org/{}/", emoji))
         .send()
@@ -22,9 +21,8 @@ async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> 
         .text()
         .await?;
 
-    let first_match = styles::Style::regex_from_string(&style)?
-        .captures_iter(resp.as_str())
-        .next();
+    let first_match =
+        styles::Style::regex_from_string(style).and_then(|m| m.captures_iter(resp.as_str()).next());
 
     if let Some(first_match) = first_match {
         if let Some(loc_url) = first_match.get(1) {
@@ -39,12 +37,15 @@ async fn get_emoji_png(emoji: String, style: String) -> anyhow::Result<Vec<u8>> 
 }
 
 async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
+    lazy_static! {
+        static ref CLIENT: Client = Client::new();
+    };
+
     let required_item = request
         .uri()
         .path()
         .trim_start_matches('/')
-        .trim_end_matches('/')
-        .to_string();
+        .trim_end_matches('/');
 
     if required_item == "ping" {
         return Ok(Response::new("pong".into()));
@@ -61,7 +62,10 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         .unwrap_or_else(HashMap::new);
 
     let fallback = String::from("apple");
-    let style = params.get("style").unwrap_or(&fallback); // todo
+    let style = params
+        .get("style")
+        .map(|s| s.to_lowercase())
+        .unwrap_or(fallback);
 
     let fallback: (u32, u32) = (0, 0);
     let size = params.get("size").map_or(fallback, |val| {
@@ -84,7 +88,7 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         (first_size, second_size)
     });
 
-    match get_emoji_png(required_item, style.to_lowercase()).await {
+    match get_emoji_png(required_item, &style, &CLIENT).await {
         Ok(bin) => {
             let bin = if size.0 == 0 && size.1 == 0 {
                 bin
@@ -93,7 +97,10 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
             };
             Ok(Response::builder()
                 .status(200)
-                .header("cache-control", format!("public, max-age={}", 864000))
+                .header(
+                    "cache-control",
+                    format!("public, max-age={}", CACHE_CONTROL_MAX),
+                )
                 .header("content-type", "image/png")
                 .body(bin.into())
                 .unwrap())

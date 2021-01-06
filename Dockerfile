@@ -23,10 +23,10 @@ COPY --from=0 /etc/passwd /etc/passwd
 USER crabby
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-ENV SSL_CERT_DIR=/etc/ssl/certs
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_DIR=/etc/ssl/certs \
+    RUST_LOG="error,emojeez=info"
 
-ENV RUST_LOG="error,emojeez=info"
 COPY --from=builder /rbin/emojeez /
 
 CMD ["/emojeez"]
