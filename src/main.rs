@@ -10,7 +10,7 @@ use hyper::{Body, Request, Response, Server};
 use lazy_static::lazy_static;
 use reqwest::Client;
 
-const CACHE_CONTROL_MAX: u32 = 864000; // 864000 secs. ~= 10 days
+const CACHE_CONTROL_MAX: u32 = 3600 * 24 * 10;
 const MAX_SIZE: (u32, u32) = (600, 600);
 
 async fn get_emoji_png(emoji: &str, style: &str, client: &Client) -> anyhow::Result<Vec<u8>> {
@@ -21,19 +21,18 @@ async fn get_emoji_png(emoji: &str, style: &str, client: &Client) -> anyhow::Res
         .text()
         .await?;
 
-    let first_match =
-        styles::Style::regex_from_string(style).and_then(|m| m.captures_iter(resp.as_str()).next());
+    let url = styles::Style::regex_from_string(style)
+        .and_then(|rexp| rexp.captures_iter(resp.as_str()).next())
+        .and_then(|matches| matches.get(1))
+        .and_then(|dirty_location_url| dirty_location_url.as_str().split_whitespace().next());
 
-    if let Some(first_match) = first_match {
-        if let Some(loc_url) = first_match.get(1) {
-            if let Some(hq_url) = loc_url.as_str().split_whitespace().next() {
-                let emoji_data = client.get(hq_url).send().await?.bytes().await?;
-                return Ok(emoji_data.to_vec());
-            };
-        };
-    };
-
-    Err(anyhow::anyhow!("not found"))
+    match url {
+        Some(hq_url) => {
+            let emoji_data = client.get(hq_url).send().await?.bytes().await?;
+            Ok(emoji_data.to_vec())
+        }
+        None => Err(anyhow::anyhow!("not found")),
+    }
 }
 
 async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
