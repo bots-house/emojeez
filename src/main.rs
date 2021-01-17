@@ -1,3 +1,4 @@
+mod isoa2flags;
 mod resizer;
 mod styles;
 
@@ -92,7 +93,21 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
         })
     };
 
-    match get_emoji_png(required_item, &style, &CLIENT).await {
+    let emoji = if required_item.starts_with("countries/") {
+        let iso_k = required_item.trim_start_matches("countries/").to_lowercase();
+        match isoa2flags::COUNTRIES_MAP.get(iso_k.as_str()) {
+            Some(real_emoji) => real_emoji,
+            _ => return Ok(Response::builder()
+                .status(404)
+                .body("not found :'(".into())
+                .unwrap()
+            )
+        }
+    } else {
+        required_item
+    };
+
+    match get_emoji_png(emoji, &style, &CLIENT).await {
         Ok(bin) => {
             let bin = if size.0 == 0 && size.1 == 0 {
                 bin
