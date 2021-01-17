@@ -94,14 +94,17 @@ async fn view(request: Request<Body>) -> Result<Response<Body>, Infallible> {
     };
 
     let emoji = if required_item.starts_with("countries/") {
-        let iso_k = required_item.trim_start_matches("countries/").to_lowercase();
+        let iso_k = required_item
+            .trim_start_matches("countries/")
+            .to_lowercase();
         match isoa2flags::COUNTRIES_MAP.get(iso_k.as_str()) {
             Some(real_emoji) => real_emoji,
-            _ => return Ok(Response::builder()
-                .status(404)
-                .body("not found :'(".into())
-                .unwrap()
-            )
+            _ => {
+                return Ok(Response::builder()
+                    .status(404)
+                    .body("not found :'(".into())
+                    .unwrap())
+            }
         }
     } else {
         required_item
